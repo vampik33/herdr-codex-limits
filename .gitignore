@@ -1,0 +1,6 @@
+__pycache__/
+*.pyc
+# written by the Herdr app / `herdr-app check` into mod folders
+mods/*/gpui-kit.d.ts
+mods/*/jsconfig.json
+herdr-shot.png
