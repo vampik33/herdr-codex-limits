@@ -38,12 +38,14 @@ centered:
 - No agent statuses: it shows account data, not agents.
 - Fetches on start, then every 5 minutes, and 15 s after any shown window's reset time.
 - Click anywhere on the strip: fetch now. Only one fetch runs at a time; a click during
-  one does nothing.
+  one starts no second fetch. From the click until that fetch ends, the line is at 30%
+  opacity. If it fails, `· update failed` follows in `dim` until the next fetch ends.
+  Background fetches don't dim the line.
 - A failed fetch keeps the last good values (stale) and retries after 1 minute,
   doubling up to 5 minutes; a success resets the backoff.
 - A window whose reset time has passed disappears until the next fetch brings it back.
-- The line redraws once a minute (stale age, expiry, time left) and after each
-  fetch; nothing animates.
+- The line redraws once a minute (stale age, expiry, time left), after each fetch and
+  on a click; apart from the click's dim nothing animates.
 - The last good values persist across reloads and restarts in shared state.
 
 ## Built from

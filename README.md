@@ -13,7 +13,8 @@ percent used and the time left until each one resets.
 - The bar and percent turn the theme's yellow from 80% and red from 95%.
 - Time left reads `48m`, `4h 48m` or `2d 2h`.
 - It refreshes every 5 minutes and about 15 s after a window resets. Click the strip
-  to refresh now.
+  to refresh now: it dims until the refresh ends, and shows `· update failed` if it
+  fails.
 - If a refresh fails, the last values stay, dimmed, with `· stale 12m`; it retries
   after 1 minute, backing off to 5 minutes.
 - Signed out or using an API key: the logo and `not signed in`. No `codex` found:

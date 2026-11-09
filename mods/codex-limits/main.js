@@ -10,6 +10,7 @@ const RETRY_MS = 60_000;
 const AFTER_RESET_MS = 15_000;
 const METER_W = 48; // bar size in px, the same as the claude-limits strip
 const METER_H = 6;
+const UPDATING_OPACITY = 0.3;
 const MESSAGES = { not_signed_in: "not signed in", codex_missing: "not installed" };
 
 // Time left until a reset: "48m", "4h 48m", "2d 2h".
@@ -30,6 +31,8 @@ export default class CodexLimits extends View {
     this.last = shared(STATE) ?? null; // survives reloads
     this.error = null; // the latest fetch's error code, null after a success
     this.busy = false;
+    this.updating = false; // a click is waiting for the running fetch
+    this.clickFailed = false; // the latest fetch was a click's and it failed
     this.failures = 0;
     this.nextAt = 0;
     this.minute = 0;
@@ -48,7 +51,11 @@ export default class CodexLimits extends View {
     }
   }
 
-  refresh(cx) {
+  refresh(cx, clicked = false) {
+    if (clicked && !this.updating) {
+      this.updating = true;
+      cx.notify();
+    }
     if (this.busy) return;
     this.busy = true;
     cx.spawn(async (cx) => {
@@ -64,15 +71,18 @@ export default class CodexLimits extends View {
         this.last = { windows: out.windows, fetchedAt: now };
         setShared(STATE, this.last);
         this.error = null;
+        this.clickFailed = false;
         this.failures = 0;
         const resets = Object.values(out.windows).map((w) => w.resetsAt * 1000 + AFTER_RESET_MS).filter((t) => t > now);
         this.nextAt = Math.min(now + POLL_MS, ...resets);
       } else {
         this.error = out?.error ?? "failed";
+        this.clickFailed = this.updating;
         this.failures += 1;
         this.nextAt = now + Math.min(RETRY_MS * 2 ** (this.failures - 1), POLL_MS);
       }
       this.busy = false;
+      this.updating = false;
       cx.notify();
     });
   }
@@ -100,20 +110,22 @@ export default class CodexLimits extends View {
     const row = h_flex().id("codex-limits").size_full().px(14).items_center().gap(8)
       .bg(t.chrome).border_t(1).border_color(t.border).cursor_pointer()
       .text_size(size).text_color(t.muted).whitespace_nowrap()
-      .on_click((_e, cx) => this.refresh(cx));
+      .on_click((_e, cx) => this.refresh(cx, true));
 
     // 0.85 × text size: as wide as the claude-limits ✻, so both strips' bars start at the same x.
     const logo = svg("mods/codex-limits/codex.svg").size(Math.round(size * 0.85)).flex_none().text_color(t.muted);
     if (!this.last && this.error) {
-      return row.child(h_flex().items_center().gap(8).child(logo).child(MESSAGES[this.error] ?? "unavailable"));
+      return row.child(h_flex().items_center().gap(8).opacity(this.updating ? UPDATING_OPACITY : 1)
+        .child(logo).child(MESSAGES[this.error] ?? "unavailable"));
     }
 
-    const body = h_flex().items_center().gap(8).when(stale, (el) => el.opacity(0.5))
+    const body = h_flex().items_center().gap(8).opacity(this.updating ? UPDATING_OPACITY : stale ? 0.5 : 1)
       .child(logo)
       .when(windows.length === 0, (el) => el.child("…"))
       .children(windows.flatMap(([, w], i) =>
         [...(i ? [div().text_color(t.dim).child("·")] : []), this.meter(w, t, now)]));
     return row.child(body)
-      .when(stale, (el) => el.child(div().text_color(t.dim).child(`· stale ${age(now - this.last.fetchedAt)}`)));
+      .when(stale, (el) => el.child(div().text_color(t.dim).child(`· stale ${age(now - this.last.fetchedAt)}`)))
+      .when(this.clickFailed && !this.updating, (el) => el.child(div().text_color(t.dim).child("· update failed")));
   }
 }
