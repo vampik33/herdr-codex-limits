@@ -1,7 +1,7 @@
 # Codex limits
 
 A thin full-width strip at the bottom of the window that shows the person's Codex
-(ChatGPT plan) usage limits in one monospace line: the 5-hour and weekly windows, each
+(ChatGPT plan) usage limits in one line: the 5-hour and weekly windows, each
 as a bar, percent used and the time left until it resets.
 
 ![Codex limits](preview.png)
@@ -9,9 +9,8 @@ as a bar, percent used and the time left until it resets.
 ## What you see
 
 One block docked at the bottom of the layout, 26px tall, full window width, `chrome`
-background with a 1px `border` line on top. One line of text in the layout's terminal
-font (`settings().font_family`, else JetBrains Mono) at the UI text size
-(`settings().ui_font_size`, 13px by default), 14px padding left and right, vertically
+background with a 1px `border` line on top. One line of text in the app's UI font
+at the UI text size (`settings().ui_font_size`, 13px by default), 14px padding left and right, vertically
 centered:
 
 ```
@@ -20,11 +19,12 @@ centered:
 
 - `<logo>` is the OpenAI symbol (`codex.svg`, drawn with `svg(...)` at the text size) in
   `muted`. The 5-hour window comes first, then the weekly one, with no labels; a `dim`
-  `·` separates them. The time left is `dim`.
-- The bar is 5 monospace cells wide and 5px tall, fully rounded: a `border`-colored
-  track with a fill `percent`% of its width. Fill and percent share one color:
-  `foreground` below 80%, `ansi3` (yellow) from 80%, `ansi1` (red) from 95%.
-- Spacing is 1 monospace cell (0.6 × text size, rounded) between every item.
+  `·` separates them. The percent and the time left are `foreground`.
+- The bar is 48px wide and 6px tall, fully rounded: a `border`-colored track with a
+  `muted` (grey) fill `percent`% of its width. From 80% the fill and percent are both
+  `ansi3` (yellow), from 95% `ansi1` (red).
+- Spacing is 8px between the logo, windows and separators, 6px inside a window, the
+  same as the claude-limits strip.
 - Time left until the reset: `48m` under an hour, `4h 48m` under a day, else `2d 2h`.
 - No data yet: `<logo> …`. Never fetched successfully and Codex is signed out or uses
   an API key: `<logo> not signed in`; no `codex` program: `<logo> not installed`; other

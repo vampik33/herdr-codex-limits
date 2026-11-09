@@ -8,7 +8,8 @@ const STATE = "codex-limits"; // shared key: the last good { windows, fetchedAt 
 const POLL_MS = 5 * 60_000;
 const RETRY_MS = 60_000;
 const AFTER_RESET_MS = 15_000;
-const BAR_CELLS = 5; // meter width, in monospace cells
+const METER_W = 48; // bar size in px, the same as the claude-limits strip
+const METER_H = 6;
 const MESSAGES = { not_signed_in: "not signed in", codex_missing: "not installed" };
 
 // Time left until a reset: "48m", "4h 48m", "2d 2h".
@@ -76,43 +77,41 @@ export default class CodexLimits extends View {
     });
   }
 
-  meter(w, t, ch, now) {
+  meter(w, t, now) {
     const pct = Math.max(0, Math.min(100, w.usedPercent));
-    const color = pct >= 95 ? t.ansi1 : pct >= 80 ? t.ansi3 : t.foreground;
-    const width = ch * BAR_CELLS;
-    return h_flex().items_center().gap(ch)
-      .child(div().w(width).h(5).flex_none().rounded_full().overflow_hidden().bg(t.border)
-        .child(div().w((width * pct) / 100).h_full().rounded_full().bg(color)))
-      .child(div().text_color(color).child(`${Math.round(pct)}%`))
-      .child(div().text_color(t.dim).child(countdown(w.resetsAt * 1000 - now)));
+    const level = pct >= 95 ? t.ansi1 : pct >= 80 ? t.ansi3 : null;
+    return h_flex().items_center().gap(6)
+      .child(div().w(METER_W).h(METER_H).flex_none().rounded_full().overflow_hidden().bg(t.border)
+        .child(div().w((METER_W * pct) / 100).h_full().rounded_full().bg(level ?? t.muted)))
+      .child(div().text_color(level ?? t.foreground).child(`${Math.round(pct)}%`))
+      .child(div().text_color(t.foreground).child(countdown(w.resetsAt * 1000 - now)));
   }
 
   render() {
     const t = theme();
     const s = settings();
     const size = s.ui_font_size ?? 13;
-    const ch = Math.round(size * 0.6); // one monospace cell
     const now = Date.now();
     const windows = Object.entries(this.last?.windows ?? {})
       .filter(([, w]) => w.resetsAt * 1000 > now)
       .sort(([a], [b]) => (a === "5h" ? -1 : b === "5h" ? 1 : 0));
     const stale = Boolean(this.error && this.last);
 
-    const row = h_flex().id("codex-limits").size_full().px(14).items_center().gap(ch * 2)
+    const row = h_flex().id("codex-limits").size_full().px(14).items_center().gap(8)
       .bg(t.chrome).border_t(1).border_color(t.border).cursor_pointer()
-      .font_family(s.font_family ?? "JetBrains Mono").text_size(size).text_color(t.muted).whitespace_nowrap()
+      .text_size(size).text_color(t.muted).whitespace_nowrap()
       .on_click((_e, cx) => this.refresh(cx));
 
     const logo = svg("mods/codex-limits/codex.svg").size(size).flex_none().text_color(t.muted);
     if (!this.last && this.error) {
-      return row.child(h_flex().items_center().gap(ch).child(logo).child(MESSAGES[this.error] ?? "unavailable"));
+      return row.child(h_flex().items_center().gap(8).child(logo).child(MESSAGES[this.error] ?? "unavailable"));
     }
 
-    const body = h_flex().items_center().gap(ch).when(stale, (el) => el.opacity(0.5))
+    const body = h_flex().items_center().gap(8).when(stale, (el) => el.opacity(0.5))
       .child(logo)
       .when(windows.length === 0, (el) => el.child("…"))
       .children(windows.flatMap(([, w], i) =>
-        [...(i ? [div().text_color(t.dim).child("·")] : []), this.meter(w, t, ch, now)]));
+        [...(i ? [div().text_color(t.dim).child("·")] : []), this.meter(w, t, now)]));
     return row.child(body)
       .when(stale, (el) => el.child(div().text_color(t.dim).child(`· stale ${age(now - this.last.fetchedAt)}`)));
   }
