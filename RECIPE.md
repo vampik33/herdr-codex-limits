@@ -65,14 +65,16 @@ centered:
   "plan","fetchedAt"}` or `{"error":"not_signed_in"|"codex_missing"|"timeout"|"failed",
   "detail"}`. `resetsAt` is Unix seconds.
 - Finds `codex` via `CODEX_BIN`, then `PATH`, then `$SHELL -lc 'command -v codex'`.
-- No art, no keys.
+- Art: `codex.svg`, the OpenAI symbol as one path, drawn with `svg(...)` so it takes
+  the text color. No keys.
 
 ## Watch out
 
 - `exec` cannot write to a program's stdin, hence the helper script.
 - The helper must always kill `codex app-server`: an npm/pnpm `codex` is a shim that
   starts node, which starts the real binary. Start it in its own process group
-  (`start_new_session`) and kill the group (TERM, then KILL), on success, error and the
+  (`start_new_session`) and kill the group (TERM, up to 1 s for the shim, then KILL the whole group even if the
+  shim already exited, since a child may ignore TERM), on success, error and the
   15 s overall timeout (`CODEX_LIMITS_TIMEOUT` overrides it, for tests).
 - Send nothing to stderr and nothing but the one line to stdout; the child's stderr goes
   to `/dev/null`.
@@ -92,7 +94,7 @@ centered:
 - `python3 -m unittest discover -s tests` passes: normal response, windows swapped
   between primary and secondary, null secondary, auth error, other error, notifications
   and junk before the result, child exit, a hanging child timing out with its whole tree
-  killed, `codex` missing, `CODEX_BIN` override and login-shell lookup.
+  killed (also when a grandchild ignores SIGTERM), `codex` missing, `CODEX_BIN` override and login-shell lookup.
 - Running the helper by hand prints one JSON line with `5h` and `wk` windows and leaves
   no `codex app-server` behind.
 - `herdr-app check mods/codex-limits` passes and `herdr-app status` shows no errors.
