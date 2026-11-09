@@ -102,7 +102,8 @@ export default class CodexLimits extends View {
       .text_size(size).text_color(t.muted).whitespace_nowrap()
       .on_click((_e, cx) => this.refresh(cx));
 
-    const logo = svg("mods/codex-limits/codex.svg").size(size).flex_none().text_color(t.muted);
+    // 0.85 × text size: as wide as the claude-limits ✻, so both strips' bars start at the same x.
+    const logo = svg("mods/codex-limits/codex.svg").size(Math.round(size * 0.85)).flex_none().text_color(t.muted);
     if (!this.last && this.error) {
       return row.child(h_flex().items_center().gap(8).child(logo).child(MESSAGES[this.error] ?? "unavailable"));
     }

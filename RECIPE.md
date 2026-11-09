@@ -17,7 +17,8 @@ centered:
 <logo> ━━━━━ 11% 4h 27m · ━━━━━ 35% 2d 2h
 ```
 
-- `<logo>` is the OpenAI symbol (`codex.svg`, drawn with `svg(...)` at the text size) in
+- `<logo>` is the OpenAI symbol (`codex.svg`, drawn with `svg(...)` at 0.85 × the text size, rounded: 11px at 13px, as wide as the
+  claude-limits `✻`) in
   `muted`. The 5-hour window comes first, then the weekly one, with no labels; a `dim`
   `·` separates them. The percent and the time left are `foreground`.
 - The bar is 48px wide and 6px tall, fully rounded: a `border`-colored track with a
